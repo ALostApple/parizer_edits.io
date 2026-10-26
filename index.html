@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#090088">
+<title>Parizer edits</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:#000}
+body{background:#000;color:#fff;font-family:'Fredoka',system-ui,-apple-system,'Segoe UI',sans-serif;min-height:100vh;-webkit-text-size-adjust:100%}
+header{background:#090088;border-bottom:5px solid #2a1fe0;padding:18px 16px;text-align:center}
+h1{font-size:clamp(1.7rem,6.5vw,2.8rem);font-weight:600;letter-spacing:.05em;text-transform:uppercase;line-height:1.1}
+h1 span{background:#fff;color:#000;padding:0 .3em;margin-left:.15em;display:inline-block}
+main{max-width:1120px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+.stage{background:#090088;border:5px solid #090088;box-shadow:8px 8px 0 #2a1fe0;align-self:start}
+canvas{display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none;background:#000}
+.hint{margin-top:16px;font-size:.95rem;line-height:1.4;color:#fff;border-left:5px solid #2a1fe0;padding-left:10px}
+.panel{background:#090088;border:5px solid #2a1fe0;padding:16px;display:grid;gap:18px}
+.field{display:grid;gap:8px}
+.field>span,.field>label{font-size:.85rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.emojis{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
+.emojis button{background:#000;border:3px solid #2a1fe0;font-size:1.3rem;line-height:1;padding:7px 0;cursor:pointer;border-radius:0;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif}
+.emojis button:active{background:#fff}
+textarea{width:100%;min-height:84px;resize:vertical;background:#000;color:#fff;border:3px solid #2a1fe0;padding:10px;font:inherit;font-family:'Fredoka','Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;font-size:16px;line-height:1.3;border-radius:0}
+textarea:focus,button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.fonts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fonts button{background:#000;color:#fff;border:3px solid #2a1fe0;padding:12px 4px;font-size:1.05rem;cursor:pointer;border-radius:0;min-height:48px}
+.fonts button.on{background:#fff;color:#000;border-color:#fff}
+.f-papyrus{font-family:Papyrus,'Papyrus Condensed',fantasy}
+.f-times{font-family:'Times New Roman',Times,serif}
+.f-fredoka{font-family:'Fredoka',sans-serif}
+.size-row{display:grid;grid-template-columns:minmax(0,1fr) 64px;gap:12px;align-items:center}
+input[type=range]{width:100%;height:32px;accent-color:#fff;background:transparent}
+.size-val{background:#000;border:3px solid #2a1fe0;text-align:center;padding:6px 0;font-weight:600}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+input[type=color]{width:100%;height:48px;background:#000;border:3px solid #2a1fe0;padding:3px;cursor:pointer;border-radius:0}
+input[type=color]:disabled{border-color:#000;cursor:not-allowed}
+.toggle{background:#000;color:#fff;border:3px solid #2a1fe0;padding:0 8px;height:48px;font:inherit;font-weight:600;cursor:pointer;border-radius:0;text-transform:uppercase;letter-spacing:.06em}
+.toggle[aria-pressed=true]{background:#fff;color:#000;border-color:#fff}
+.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.act{font:inherit;font-weight:600;font-size:1.05rem;padding:15px 8px;cursor:pointer;border-radius:0;text-transform:uppercase;letter-spacing:.06em;border:3px solid #000}
+.act.dl{background:#fff;color:#000;box-shadow:5px 5px 0 #000}
+.act.cp{background:#000;color:#fff;border-color:#fff;box-shadow:5px 5px 0 #2a1fe0}
+.act:active{transform:translate(4px,4px);box-shadow:1px 1px 0 #000}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#fff;color:#000;border:3px solid #090088;padding:12px 18px;font-weight:600;display:none;z-index:10;max-width:90vw;text-align:center}
+.toast.show{display:block}
+footer{text-align:center;padding:8px 16px 28px;font-size:.85rem;color:#fff}
+@media(min-width:900px){
+main{grid-template-columns:minmax(0,1fr) 390px;align-items:start;padding:30px 24px;gap:28px}
+.panel{position:sticky;top:20px}
+}
+</style>
+</head>
+<body>
+<header><h1>Parizer<span>edits</span></h1></header>
+<main>
+<section>
+<div class="stage"><canvas id="c" width="720" height="720"></canvas></div>
+<p class="hint">Drag the text to move it. Resize by pulling the square corner handle, pinching with two fingers, or scrolling the mouse wheel over the photo.</p>
+</section>
+<section class="panel">
+<div class="field">
+<label for="txt">Your text</label>
+<textarea id="txt" placeholder="Type something..." spellcheck="false">Parizer edits</textarea>
+</div>
+<div class="field">
+<span>Emojis</span>
+<div class="emojis" id="emojis"></div>
+</div>
+<div class="field">
+<span>Font</span>
+<div class="fonts" id="fonts">
+<button type="button" class="f-papyrus" data-font="papyrus">Papyrus</button>
+<button type="button" class="f-times" data-font="times">Times New Roman</button>
+<button type="button" class="f-fredoka on" data-font="fredoka">Fredoka</button>
+</div>
+</div>
+<div class="field">
+<label for="size">Text size</label>
+<div class="size-row">
+<input type="range" id="size" min="10" max="400" value="64">
+<div class="size-val" id="sizeVal">64</div>
+</div>
+</div>
+<div class="two">
+<div class="field">
+<label for="color">Text colour</label>
+<input type="color" id="color" value="#ffffff">
+</div>
+<div class="field">
+<label for="bgColor">Background colour</label>
+<input type="color" id="bgColor" value="#090088">
+</div>
+</div>
+<div class="field">
+<span>Text background</span>
+<button type="button" class="toggle" id="bgToggle" aria-pressed="true">Background: on</button>
+</div>
+<div class="actions">
+<button type="button" class="act cp" id="copy">Copy</button>
+<button type="button" class="act dl" id="download">Download</button>
+</div>
+</section>
+</main>
+<footer>Parizer edits</footer>
+<div class="toast" id="toast" role="status"></div>
+<script>
+(function(){
+var canvas=document.getElementById('c');
+var ctx=canvas.getContext('2d');
+var txt=document.getElementById('txt');
+var size=document.getElementById('size');
+var sizeVal=document.getElementById('sizeVal');
+var color=document.getElementById('color');
+var bgColor=document.getElementById('bgColor');
+var bgToggle=document.getElementById('bgToggle');
+var toast=document.getElementById('toast');
+var fontsBox=document.getElementById('fonts');
+var families={
+papyrus:"Papyrus,'Papyrus Condensed',"+"'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla',fantasy",
+times:"'Times New Roman',Times,"+"'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla',serif",
+fredoka:"'Fredoka',"+"'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla',sans-serif"
+};
+var state={text:txt.value,font:'fredoka',size:64,color:'#ffffff',bg:true,bgColor:'#090088',x:360,y:360};
+var img=new Image();
+var imgReady=false;
+var toastTimer=null;
+
+function showToast(msg){
+toast.textContent=msg;
+toast.classList.add('show');
+clearTimeout(toastTimer);
+toastTimer=setTimeout(function(){toast.classList.remove('show')},2200);
+}
+
+function uiScale(){
+var r=canvas.getBoundingClientRect();
+return r.width?canvas.width/r.width:1;
+}
+
+function getBox(){
+var lines=state.text.split('\n');
+ctx.font=state.size+'px '+families[state.font];
+var lh=state.size*1.2;
+var w=0;
+for(var i=0;i<lines.length;i++){
+var m=ctx.measureText(lines[i]).width;
+if(m>w)w=m;
+}
+var h=lh*lines.length;
+var pad=state.size*0.25;
+return{lines:lines,lh:lh,w:w,h:h,pad:pad,left:state.x-w/2-pad,top:state.y-h/2-pad,right:state.x+w/2+pad,bottom:state.y+h/2+pad};
+}
+
+function roundRectPath(x,y,w,h,r){
+r=Math.max(0,Math.min(r,w/2,h/2));
+ctx.beginPath();
+ctx.moveTo(x+r,y);
+ctx.arcTo(x+w,y,x+w,y+h,r);
+ctx.arcTo(x+w,y+h,x,y+h,r);
+ctx.arcTo(x,y+h,x,y,r);
+ctx.arcTo(x,y,x+w,y,r);
+ctx.closePath();
+}
+
+function hasText(){
+return state.text.trim().length>0;
+}
+
+function render(ui){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+if(imgReady){
+ctx.imageSmoothingEnabled=true;
+ctx.imageSmoothingQuality='high';
+ctx.drawImage(img,0,0,canvas.width,canvas.height);
+}else{
+ctx.fillStyle='#090088';
+ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+if(!hasText())return;
+var b=getBox();
+if(state.bg){
+ctx.fillStyle=state.bgColor;
+roundRectPath(b.left,b.top,b.right-b.left,b.bottom-b.top,state.size*0.35);
+ctx.fill();
+}
+ctx.fillStyle=state.color;
+ctx.textAlign='center';
+ctx.textBaseline='middle';
+ctx.font=state.size+'px '+families[state.font];
+for(var i=0;i<b.lines.length;i++){
+ctx.fillText(b.lines[i],state.x,b.top+b.pad+b.lh*(i+0.5));
+}
+if(ui){
+var s=uiScale();
+ctx.lineWidth=4*s;
+ctx.setLineDash([]);
+ctx.strokeStyle='#090088';
+roundRectPath(b.left,b.top,b.right-b.left,b.bottom-b.top,state.size*0.35);
+ctx.stroke();
+ctx.lineWidth=2*s;
+ctx.setLineDash([8*s,6*s]);
+ctx.strokeStyle='#ffffff';
+roundRectPath(b.left,b.top,b.right-b.left,b.bottom-b.top,state.size*0.35);
+ctx.stroke();
+ctx.setLineDash([]);
+var hs=26*s;
+ctx.fillStyle='#ffffff';
+ctx.fillRect(b.right-hs/2,b.bottom-hs/2,hs,hs);
+ctx.lineWidth=3*s;
+ctx.strokeStyle='#090088';
+ctx.strokeRect(b.right-hs/2,b.bottom-hs/2,hs,hs);
+}
+}
+
+function ensureFont(){
+var f=families[state.font];
+if(document.fonts&&document.fonts.load){
+document.fonts.load(state.size+'px '+f,state.text||'A').then(function(){render(true)},function(){render(true)});
+}
+render(true);
+}
+
+function clampPos(){
+state.x=Math.max(0,Math.min(canvas.width,state.x));
+state.y=Math.max(0,Math.min(canvas.height,state.y));
+}
+
+function setSize(v){
+v=Math.round(Math.max(10,Math.min(400,v)));
+state.size=v;
+size.value=v;
+sizeVal.textContent=v;
+}
+
+function toCanvas(e){
+var r=canvas.getBoundingClientRect();
+return{x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height};
+}
+
+function onHandle(p){
+if(!hasText())return false;
+var b=getBox();
+var r=26*uiScale();
+return Math.abs(p.x-b.right)<=r&&Math.abs(p.y-b.bottom)<=r;
+}
+
+function inBox(p){
+if(!hasText())return false;
+var b=getBox();
+var m=10*uiScale();
+return p.x>=b.left-m&&p.x<=b.right+m&&p.y>=b.top-m&&p.y<=b.bottom+m;
+}
+
+var pts={};
+var count=0;
+var mode=null;
+var off={x:0,y:0};
+var startDist=1;
+var startSize=64;
+
+function ptsList(){
+var out=[];
+for(var k in pts)out.push(pts[k]);
+return out;
+}
+
+function dist(a,b){
+return Math.hypot(a.x-b.x,a.y-b.y)||1;
+}
+
+canvas.addEventListener('pointerdown',function(e){
+var p=toCanvas(e);
+if(!pts[e.pointerId])count++;
+pts[e.pointerId]=p;
+try{canvas.setPointerCapture(e.pointerId)}catch(err){}
+if(count===2){
+if(hasText()){
+var l=ptsList();
+mode='pinch';
+startDist=dist(l[0],l[1]);
+startSize=state.size;
+}
+}else if(count===1){
+if(onHandle(p)){
+mode='resize';
+startDist=dist(p,{x:state.x,y:state.y});
+startSize=state.size;
+}else if(inBox(p)){
+mode='drag';
+off={x:p.x-state.x,y:p.y-state.y};
+}else{
+mode=null;
+}
+}
+e.preventDefault();
+});
+
+canvas.addEventListener('pointermove',function(e){
+var p=toCanvas(e);
+if(!pts[e.pointerId]){
+if(e.pointerType==='mouse'){
+canvas.style.cursor=onHandle(p)?'nwse-resize':(inBox(p)?'move':'default');
+}
+return;
+}
+pts[e.pointerId]=p;
+if(mode==='pinch'&&count>=2){
+var l=ptsList();
+setSize(startSize*dist(l[0],l[1])/startDist);
+render(true);
+}else if(mode==='resize'){
+setSize(startSize*dist(p,{x:state.x,y:state.y})/startDist);
+render(true);
+}else if(mode==='drag'){
+state.x=p.x-off.x;
+state.y=p.y-off.y;
+clampPos();
+render(true);
+}
+e.preventDefault();
+});
+
+function endPointer(e){
+if(pts[e.pointerId]){
+delete pts[e.pointerId];
+count--;
+}
+if(count<2&&mode==='pinch')mode=null;
+if(count===0)mode=null;
+}
+canvas.addEventListener('pointerup',endPointer);
+canvas.addEventListener('pointercancel',endPointer);
+canvas.addEventListener('lostpointercapture',endPointer);
+
+canvas.addEventListener('wheel',function(e){
+if(!hasText())return;
+e.preventDefault();
+setSize(state.size*Math.exp(-e.deltaY*0.0015));
+render(true);
+},{passive:false});
+
+canvas.addEventListener('contextmenu',function(e){e.preventDefault()});
+
+txt.addEventListener('input',function(){
+state.text=txt.value;
+ensureFont();
+});
+
+var emojiList=['🥷🏿','😂','😍','😎','🥳','😭','😡','🤔','👍','🔥','❤️','💙','✨','🎉','💀','👑'];
+var emojiBox=document.getElementById('emojis');
+emojiList.forEach(function(em){
+var b=document.createElement('button');
+b.type='button';
+b.textContent=em;
+b.setAttribute('aria-label','Insert '+em);
+b.addEventListener('click',function(){
+var a=txt.selectionStart,z=txt.selectionEnd;
+if(typeof a!=='number'){a=z=txt.value.length}
+txt.value=txt.value.slice(0,a)+em+txt.value.slice(z);
+var pos=a+em.length;
+txt.setSelectionRange(pos,pos);
+state.text=txt.value;
+ensureFont();
+});
+emojiBox.appendChild(b);
+});
+
+fontsBox.addEventListener('click',function(e){
+var btn=e.target.closest('button');
+if(!btn)return;
+state.font=btn.getAttribute('data-font');
+var all=fontsBox.querySelectorAll('button');
+for(var i=0;i<all.length;i++)all[i].classList.toggle('on',all[i]===btn);
+ensureFont();
+});
+
+size.addEventListener('input',function(){
+setSize(Number(size.value));
+render(true);
+});
+
+color.addEventListener('input',function(){
+state.color=color.value;
+render(true);
+});
+
+bgColor.addEventListener('input',function(){
+state.bgColor=bgColor.value;
+render(true);
+});
+
+bgToggle.addEventListener('click',function(){
+state.bg=!state.bg;
+bgToggle.setAttribute('aria-pressed',state.bg?'true':'false');
+bgToggle.textContent='Background: '+(state.bg?'on':'off');
+bgColor.disabled=!state.bg;
+render(true);
+});
+
+function exportBlob(){
+render(false);
+return new Promise(function(resolve,reject){
+try{
+canvas.toBlob(function(b){
+render(true);
+if(b)resolve(b);else reject(new Error('empty'));
+},'image/png');
+}catch(err){
+render(true);
+reject(err);
+}
+});
+}
+
+document.getElementById('download').addEventListener('click',function(){
+exportBlob().then(function(blob){
+var url=URL.createObjectURL(blob);
+var a=document.createElement('a');
+a.href=url;
+a.download='parizer-edit.png';
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+setTimeout(function(){URL.revokeObjectURL(url)},1500);
+showToast('Downloaded');
+}).catch(function(){
+showToast('Could not export the image');
+});
+});
+
+document.getElementById('copy').addEventListener('click',function(){
+if(!navigator.clipboard||typeof ClipboardItem==='undefined'){
+showToast('Copy is not supported here, use Download');
+return;
+}
+var item=new ClipboardItem({'image/png':exportBlob()});
+navigator.clipboard.write([item]).then(function(){
+showToast('Copied to clipboard');
+}).catch(function(){
+showToast('Copy failed, use Download');
+});
+});
+
+img.onload=function(){
+imgReady=true;
+if(img.naturalWidth&&img.naturalHeight){
+canvas.width=img.naturalWidth;
+canvas.height=img.naturalHeight;
+}
+state.x=canvas.width/2;
+state.y=canvas.height/2;
+setSize(Math.round(canvas.width*0.09));
+ensureFont();
+};
+img.onerror=function(){
+imgReady=false;
+render(true);
+showToast('image.png was not found');
+};
+img.src='image.png';
+
+setSize(state.size);
+ensureFont();
+if(document.fonts&&document.fonts.ready){
+document.fonts.ready.then(function(){render(true)});
+}
+window.addEventListener('resize',function(){render(true)});
+})();
+</script>
+</body>
+</html>
